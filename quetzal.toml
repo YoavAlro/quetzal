@@ -1,0 +1,16 @@
+# Quetzal configuration.
+#
+# Quetzal evaluates a coding-agent harness by having it answer questions about a
+# target codebase, then judging the answers against ground truth. This example
+# config points Quetzal at *its own* repository so you can run it out of the box.
+#
+# Every value here is overridable by env var:
+#   QUETZAL_TARGET_REPO, QUETZAL_SUITES_DIR, QUETZAL_RESULTS_DIR, QUETZAL_CONFIG
+
+target_repo  = "."        # the codebase under test (relative to this file)
+suites_dir   = "suites"   # one <suite>.json question file per suite
+results_dir  = "results"  # benchmark sessions are written here
+
+# suite name -> code root(s) relative to target_repo (the agent's starting hint)
+[suites]
+quetzal = ["quetzal"]

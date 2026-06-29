@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quetzal · Codebase QA Console</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <span class="mark"></span>
+      Quetzal
+      <span class="sub">Codebase QA Console</span>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-view="questions">Questions</button>
+      <button class="tab" data-view="history">Score history</button>
+    </div>
+  </div>
+
+  <!-- Questions view -->
+  <section id="view-questions" class="view active">
+    <div class="layout">
+      <aside class="panel panel-pad sidebar">
+        <h2>Suites</h2>
+        <div id="svc-list"></div>
+      </aside>
+      <main class="panel panel-pad">
+        <div class="head">
+          <h1 id="svc-title">—</h1>
+          <span id="svc-roots" class="roots"></span>
+          <span class="spacer"></span>
+          <button class="btn btn-primary" id="add-btn">+ Add question</button>
+        </div>
+        <div id="q-table"></div>
+      </main>
+    </div>
+  </section>
+
+  <!-- History view -->
+  <section id="view-history" class="view">
+    <div class="history-wrap">
+      <div>
+        <div class="chart-head"><h3>Sessions</h3><span class="muted" id="sessions-meta"></span></div>
+        <div id="sessions" class="cards"></div>
+      </div>
+      <div class="panel panel-pad chart">
+        <div class="chart-head">
+          <h3>Trend</h3>
+          <select id="trend-service" class="btn"></select>
+          <select id="trend-metric" class="btn">
+            <option value="accuracy_pct">Accuracy %</option>
+            <option value="avg_tokens">Avg tokens / question</option>
+          </select>
+        </div>
+        <div id="trend-chart"></div>
+      </div>
+      <div id="session-detail"></div>
+    </div>
+  </section>
+
+  <!-- Edit/Add modal -->
+  <div class="modal-bg" id="modal-bg">
+    <div class="modal">
+      <header><span id="modal-title">Edit question</span><button class="btn btn-ghost close" id="modal-close">✕</button></header>
+      <div class="body">
+        <div class="field">
+          <label>Question</label>
+          <textarea id="f-question" style="min-height:70px"></textarea>
+        </div>
+        <div class="field">
+          <label>Ground truth (grading reference — derive from code)</label>
+          <textarea id="f-gt"></textarea>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Difficulty</label>
+            <select id="f-difficulty">
+              <option value="easy">easy</option>
+              <option value="medium">medium</option>
+              <option value="hard">hard</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Tags (comma-separated)</label>
+            <input id="f-tags" type="text" placeholder="purpose, invariant" />
+          </div>
+        </div>
+        <div class="field">
+          <label>ID <span class="muted">(leave blank to auto-generate)</span></label>
+          <input id="f-id" type="text" placeholder="auto" />
+        </div>
+        <label class="toggle" id="f-reviewed-toggle"><span class="track"></span><span>Reviewed</span></label>
+      </div>
+      <footer>
+        <button class="btn" id="modal-cancel">Cancel</button>
+        <button class="btn btn-primary" id="modal-save">Save question</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="/app.js"></script>
+</body>
+</html>
