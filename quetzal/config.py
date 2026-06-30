@@ -72,3 +72,31 @@ AGENT_TIMEOUT_S: Final[int] = 600  # per-question wall-clock cap for a CLI run
 
 # Read-only tool allowlist for the Claude Code client (no edits, no shell writes).
 CLAUDE_ALLOWED_TOOLS: Final[tuple[str, ...]] = ("Read", "Grep", "Glob", "LS")
+
+# `quetzal docs-check` (the keep-docs-fresh hook) fires only on this unambiguous
+# signal: a *new* package manifest landed in a directory with no README — i.e. a
+# new module with no documentation. Kept deliberately narrow (low-noise);
+# override the list under `[docs_check] manifests = [...]` in quetzal.toml.
+_DEFAULT_MANIFESTS: Final[tuple[str, ...]] = (
+    "pyproject.toml",
+    "setup.py",
+    "package.json",
+    "go.mod",
+    "Cargo.toml",
+    "pom.xml",
+    "build.gradle",
+    "build.gradle.kts",
+)
+MODULE_MANIFESTS: Final[tuple[str, ...]] = tuple(
+    (_CONFIG.get("docs_check") or {}).get("manifests") or _DEFAULT_MANIFESTS
+)
+
+# `docs-check` also flags a README (in the current working set) as a candidate
+# to condense — but the budget scales with how big the module is:
+#     allowed lines = README_BASE_LINES + README_LINES_PER_100_LOC * (module LOC / 100)
+# so a large package may carry a long README while a tiny one may not. `quetzal
+# init` sets these from a concise/balanced/thorough choice; override under
+# `[docs_check]`. Set both to 0 to disable the bloat nudge.
+_docs_cfg = _CONFIG.get("docs_check") or {}
+README_BASE_LINES: Final[int] = int(_docs_cfg.get("readme_base_lines", 40))
+README_LINES_PER_100_LOC: Final[int] = int(_docs_cfg.get("readme_lines_per_100_loc", 20))

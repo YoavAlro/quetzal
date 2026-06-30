@@ -1,5 +1,16 @@
 # 🪶 Quetzal
 
+```
+╔════════════════════════════════════════════════════════════════════════════╗
+║  ◢◣◢◣  ▟▛   .-‾‾-.   ◇  ▞▚▞▚▞▚▞▚▞▚▞▚▞▚▞▚▞▚▞▚  ◇   ▜▙  ◢◣◢◣                 ║
+║  ◥◤◥◤ ▟▛   / ⊙  ⊙ \  ◈══════════════════════════╗  ▜▙ ◥◤◥◤                 ║
+║  ◢◣◢◣ ██  │  ╲╱╲╱  │ ║  Q U E T Z A L C O A T L ║ ██  ◢◣◢◣                 ║
+║  ◥◤◥◤ ▜▙   \  ▽▽▽ /  ◈══════════════════════════╝  ▟▛ ◥◤◥◤                 ║
+║  ◢◣◢◣  ▜▙   '-.._.-'  ◇  ▚▞▚▞▚▞▚▞▚▞▚▞▚▞▚▞▚▞▚▞  ◇   ▟▛  ◢◣◢◣                ║
+║      ░▒▓█  the feathered serpent · asks · judges · reports  █▓▒░           ║
+╚════════════════════════════════════════════════════════════════════════════╝
+```
+
 **Measure how well — and how cheaply — a coding-agent harness answers questions about your codebase.**
 
 Quetzal points a real coding-agent CLI (Claude Code, Codex, Cursor, opencode) at a repository,
@@ -19,13 +30,22 @@ reimplementation, because the harness is the thing worth measuring.
 
 ## Install
 
+As a standalone tool on your `PATH` (recommended) — no venv to manage:
+
+```bash
+uv tool install .          # or: pipx install .   (from a clone)
+quetzal --version
+```
+
+Or for development, editable in a venv:
+
 ```bash
 git clone <your-fork-url> quetzal && cd quetzal
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e .
 ```
 
-Requires Python 3.12+. To answer questions you need at least one agent CLI installed and
+Requires Python 3.11+. To answer questions you need at least one agent CLI installed and
 authenticated — by default [Claude Code](https://docs.claude.com/claude-code) (`claude`). Check
 what Quetzal can see:
 
@@ -55,7 +75,20 @@ Smoke a single suite without spending much: `quetzal run --suite quetzal --limit
 
 ## Point it at your own codebase
 
-Edit `quetzal.toml`:
+Run `init` from inside the repo you want to benchmark — it scaffolds everything:
+
+```bash
+cd /path/to/your/repo
+quetzal init                       # asks which agent harness to wire the keep-docs-fresh hook for
+quetzal init --agent codex         # or pick non-interactively (claude-code | codex | cursor | opencode)
+quetzal init --git-hook            # also install a harness-agnostic git pre-commit hook
+quetzal init --no-hooks            # config only, skip the hook
+```
+
+`init` scaffolds `quetzal.toml`, `suites/`, `results/`, installs the keep-docs-fresh hook **native
+to your chosen harness** (see below), and prints which agent CLIs it found. It's idempotent
+(existing files are left as-is unless `--force`). It then leaves you with a `quetzal.toml` to fill
+in — map each code area you care about to a suite:
 
 ```toml
 target_repo = "/path/to/your/repo"   # the codebase under test
@@ -120,6 +153,47 @@ quetzal ui          # → http://127.0.0.1:8765
 
 Local-only, no auth — don't expose the port publicly.
 
+## Keeping module docs fresh
+
+Good module docs are what Quetzal's benchmark rewards — they make a coding-agent harness answer
+questions about your code faster and cheaper. To keep them from rotting as the code grows, `quetzal
+init` installs a **keep-docs-fresh hook using each harness's own native mechanism**. When the agent
+finishes a turn it nudges on two signals:
+
+- **Missing docs** — a **new package manifest** (`pyproject.toml`, `package.json`, `go.mod`, …)
+  landed in a directory with **no README** → write documentation for that module.
+- **Bloated docs** — a README **you're editing** has grown past a budget that **scales with its
+  module's size** (`base + per-100-LOC × module_LOC`) → condense it: cut redundancy, move deep
+  detail out, keep purpose / API / key files. A 3000-line package earns a long README; a 50-line
+  helper does not.
+
+`quetzal init` asks how detailed READMEs should be — **concise / balanced / thorough** — and writes
+the matching budget into `[docs_check]`. Either way it only looks at files in the current working
+set, and you can always say the change isn't warranted.
+
+| Harness | Native integration | Installed to | Behavior |
+|---------|--------------------|--------------|----------|
+| `claude-code` | Stop hook | `.claude/settings.json` + `.claude/hooks/` | **blocks** the turn; fires once (`stop_hook_active` guard) |
+| `codex` | Stop hook | `.codex/hooks.json` + `.codex/hooks/` | **blocks** (exit 2); run Codex `/hooks` to trust it first |
+| `cursor` | `stop` hook | `.cursor/hooks.json` + `.cursor/hooks/` | auto-submits a follow-up; `loop_limit` caps re-fire |
+| `opencode` | plugin | `.opencode/plugin/` | **notifies** on `session.idle` (plugins can't block a finished session) |
+
+For `claude-code` it also drops a **`document-module` skill** (`.claude/skills/document-module/`) —
+the documented way to write a module README + docstrings **derived from the code**. `quetzal init
+--git-hook` adds a harness-agnostic **git pre-commit** warning on top of any of these.
+
+All of them call one command you can also run by hand:
+
+```bash
+quetzal docs-check                      # claude-code blocking JSON (the default)
+quetzal docs-check --format json        # {"nudge": bool, "dirs": [...], "reason": ...}
+```
+
+It's deliberately **high-precision, low-noise** and only ever inspects files in the working set.
+Tune it in `quetzal.toml` under `[docs_check]`: `manifests = [...]` sets what counts as a "new
+module", and `readme_base_lines` / `readme_lines_per_100_loc` set the size-relative condense budget
+(both `0` disables the bloat nudge).
+
 ## Output
 
 `results/<session-id>/`:
@@ -137,6 +211,8 @@ Local-only, no auth — don't expose the port publicly.
 | `quetzal/datasets/` | JSON-backed question store (shared by runner + UI) |
 | `quetzal/ui/` | Build-free local web console |
 | `quetzal/{cli,score,report,main}.py` | The pipeline entry points |
+| `quetzal/init_cmd.py` | `quetzal init` — scaffold config, suites/results dirs, the keep-docs-fresh hook + skill |
+| `quetzal/docs_check.py` | `quetzal docs-check` — the new-module-without-docs nudge behind the hook |
 | `quetzal.toml` | Target repo, suites dir, results dir, suite → code-roots map |
 
 Adding a new answerer = a new `AgentClient` in `quetzal/agents/` plus one line in its registry. Keep
