@@ -30,6 +30,7 @@ Usage:
 from __future__ import annotations
 
 import json
+import select
 import subprocess
 import sys
 from pathlib import Path
@@ -53,8 +54,20 @@ _LOC_SKIP_SUFFIXES = frozenset({".md", ".rst", ".txt"})
 
 
 def _read_payload() -> dict:
-    """The hook payload arrives on stdin; absent when run by hand."""
+    """The hook payload arrives on stdin; absent when run by hand.
+
+    Never blocks: a hook pipes the JSON and closes stdin, but a direct CLI run
+    in a non-interactive shell (agent, CI, scripted line) may inherit an open
+    pipe with no data and no EOF — reading that would hang until timeout. We
+    only read when stdin is actually ready (data or EOF) within a brief window.
+    """
     if sys.stdin.isatty():
+        return {}
+    try:
+        ready, _, _ = select.select([sys.stdin], [], [], 0.5)
+    except (OSError, ValueError):
+        return {}  # stdin not selectable (e.g. closed / non-POSIX) — treat as empty
+    if not ready:
         return {}
     raw = sys.stdin.read().strip()
     if not raw:
