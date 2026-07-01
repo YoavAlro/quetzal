@@ -42,9 +42,9 @@ QUETZAL_TOML_TEMPLATE = '''\
 # truth. Every value is overridable by env var (QUETZAL_TARGET_REPO,
 # QUETZAL_SUITES_DIR, QUETZAL_RESULTS_DIR, QUETZAL_CONFIG).
 
-target_repo  = "."        # the codebase under test (relative to this file)
-suites_dir   = "suites"   # one <suite>.json question file per suite
-results_dir  = "results"  # benchmark sessions are written here
+target_repo  = "."               # the codebase under test (relative to this file)
+suites_dir   = "suites"          # one <suite>.json question file per suite (curated, commit these)
+results_dir  = ".quetzal/results"  # benchmark sessions (generated, git-ignored)
 
 # suite name -> code root(s) relative to target_repo (the agent's starting hint).
 # Add an entry per code area you want to benchmark, e.g.:
@@ -227,9 +227,9 @@ def _merge_cursor_hook(json_path: Path, command: str, marker: str) -> None:
     click.echo(f"  ✓ stop hook registered in {json_path}")
 
 
-def _ensure_gitignore(repo: Path, results_dirname: str) -> None:
+def _ensure_gitignore(repo: Path, dirname: str) -> None:
     gitignore = repo / ".gitignore"
-    entry = f"{results_dirname}/"
+    entry = f"{dirname}/"
     existing = gitignore.read_text() if gitignore.exists() else ""
     if entry in existing.split():
         return
@@ -344,9 +344,9 @@ def main(
     docs_block = _docs_check_block(readme_detail) if (will_write_toml and readme_detail) else ""
     _write_if_absent(toml_path, QUETZAL_TOML_TEMPLATE + docs_block, force, "quetzal.toml")
     (repo / "suites").mkdir(exist_ok=True)
-    (repo / "results").mkdir(exist_ok=True)
-    click.echo("  ✓ suites/ and results/ ready")
-    _ensure_gitignore(repo, "results")
+    (repo / ".quetzal" / "results").mkdir(parents=True, exist_ok=True)
+    click.echo("  ✓ suites/ (curated) and .quetzal/results/ (generated) ready")
+    _ensure_gitignore(repo, ".quetzal")
 
     if no_hooks:
         click.echo("  • keep-docs-fresh hook: skipped (--no-hooks)")

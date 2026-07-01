@@ -7,8 +7,8 @@ dist/
 .venv/
 venv/
 .env
+.quetzal/
 results/
-quetzal-results/
 .DS_Store
 .pytest_cache/
 .ruff_cache/

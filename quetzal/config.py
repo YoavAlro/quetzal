@@ -55,9 +55,10 @@ SUITES_DIR: Final[Path] = _resolve(
     os.environ.get("QUETZAL_SUITES_DIR") or _CONFIG.get("suites_dir"), _BASE / "suites"
 )
 
-# Where benchmark sessions are written.
+# Where benchmark sessions are written (generated output; keep out of version
+# control). Defaults under .quetzal/ so it doesn't clutter the target repo root.
 RESULTS_DIR: Final[Path] = _resolve(
-    os.environ.get("QUETZAL_RESULTS_DIR") or _CONFIG.get("results_dir"), _BASE / "results"
+    os.environ.get("QUETZAL_RESULTS_DIR") or _CONFIG.get("results_dir"), _BASE / ".quetzal" / "results"
 )
 
 # suite name -> code root(s) relative to REPO_ROOT, handed to the agent as a hint.

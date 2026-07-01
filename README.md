@@ -83,15 +83,15 @@ quetzal init --git-hook            # also install a harness-agnostic git pre-com
 quetzal init --no-hooks            # config only, skip the hook
 ```
 
-`init` scaffolds `quetzal.toml`, `suites/`, `results/`, installs the keep-docs-fresh hook **native
+`init` scaffolds `quetzal.toml`, `suites/`, `.quetzal/results/`, installs the keep-docs-fresh hook **native
 to your chosen harness** (see below), and prints which agent CLIs it found. It's idempotent
 (existing files are left as-is unless `--force`). It then leaves you with a `quetzal.toml` to fill
 in — map each code area you care about to a suite:
 
 ```toml
 target_repo = "/path/to/your/repo"   # the codebase under test
-suites_dir  = "suites"               # one <suite>.json per suite
-results_dir = "results"
+suites_dir  = "suites"               # one <suite>.json per suite (curated, committed)
+results_dir = ".quetzal/results"     # benchmark sessions (generated, git-ignored)
 
 [suites]
 # suite name -> code root(s) relative to target_repo (the agent's starting hint)
@@ -194,7 +194,7 @@ module", and `readme_base_lines` / `readme_lines_per_100_loc` set the size-relat
 
 ## Output
 
-`results/<session-id>/`:
+`.quetzal/results/<session-id>/`:
 - `config.json` — run metadata (agent, model, judge, suites)
 - `<suite>/<case-id>.json` — question, answer, token usage, judge verdict
 - `report.json` — aggregated per-suite + overall stats

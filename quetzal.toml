@@ -7,9 +7,9 @@
 # Every value here is overridable by env var:
 #   QUETZAL_TARGET_REPO, QUETZAL_SUITES_DIR, QUETZAL_RESULTS_DIR, QUETZAL_CONFIG
 
-target_repo  = "."        # the codebase under test (relative to this file)
-suites_dir   = "suites"   # one <suite>.json question file per suite
-results_dir  = "results"  # benchmark sessions are written here
+target_repo  = "."               # the codebase under test (relative to this file)
+suites_dir   = "suites"          # one <suite>.json question file per suite
+results_dir  = ".quetzal/results"  # benchmark sessions are written here (generated)
 
 # suite name -> code root(s) relative to target_repo (the agent's starting hint)
 [suites]
