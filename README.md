@@ -26,14 +26,15 @@ reimplementation, because the harness is the thing worth measuring.
 As a standalone tool on your `PATH` (recommended) — no venv to manage:
 
 ```bash
-uv tool install .          # or: pipx install .   (from a clone)
+uv tool install quetzal-eval      # or: pipx install quetzal-eval
 quetzal --version
 ```
 
-Or for development, editable in a venv:
+The distribution is `quetzal-eval` on PyPI; the command it installs is `quetzal`. Or for
+development, editable from a clone:
 
 ```bash
-git clone <your-fork-url> quetzal && cd quetzal
+git clone https://github.com/YoavAlro/quetzal && cd quetzal
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e .
 ```
