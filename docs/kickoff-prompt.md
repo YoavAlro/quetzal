@@ -14,7 +14,10 @@ Set up the `quetzal-eval` benchmark on this repository. Do each step and report 
 
 1. Install and confirm the CLI:
    - `uv tool install quetzal-eval`  (or `pip install quetzal-eval`)
-   - `quetzal --version`   (expect 0.1.0)
+     - If uv reports "No solution found" for a version you know is published, its
+       index cache is stale — add `--refresh` (and `--force` to replace an
+       installed copy): `uv tool install quetzal-eval --refresh --force`.
+   - `quetzal --version`
    - `quetzal agents`      (shows which harness CLIs are installed)
 
 2. From the repo root, run `quetzal init` — pick THIS harness when asked, and a README-detail
