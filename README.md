@@ -1,15 +1,8 @@
-# 🪶 Quetzal
+<p align="center">
+  <img src="assets/quetzal-logo.png" alt="Quetzal" width="420">
+</p>
 
-```
-╔════════════════════════════════════════════════════════════════════════════╗
-║  ◢◣◢◣  ▟▛   .-‾‾-.   ◇  ▞▚▞▚▞▚▞▚▞▚▞▚▞▚▞▚▞▚▞▚  ◇   ▜▙  ◢◣◢◣                 ║
-║  ◥◤◥◤ ▟▛   / ⊙  ⊙ \  ◈══════════════════════════╗  ▜▙ ◥◤◥◤                 ║
-║  ◢◣◢◣ ██  │  ╲╱╲╱  │ ║  Q U E T Z A L C O A T L ║ ██  ◢◣◢◣                 ║
-║  ◥◤◥◤ ▜▙   \  ▽▽▽ /  ◈══════════════════════════╝  ▟▛ ◥◤◥◤                 ║
-║  ◢◣◢◣  ▜▙   '-.._.-'  ◇  ▚▞▚▞▚▞▚▞▚▞▚▞▚▞▚▞▚▞▚▞  ◇   ▟▛  ◢◣◢◣                ║
-║      ░▒▓█  the feathered serpent · asks · judges · reports  █▓▒░           ║
-╚════════════════════════════════════════════════════════════════════════════╝
-```
+<p align="center"><em>the feathered serpent · asks · judges · reports</em></p>
 
 **Measure how well — and how cheaply — a coding-agent harness answers questions about your codebase.**
 
