@@ -69,8 +69,9 @@ Smoke a single suite without spending much: `quetzal run --suite quetzal --limit
 
 ## Point it at your own codebase
 
-> **In a hurry?** Hand your coding agent the [kick-off prompt](docs/kickoff-prompt.md) and it will
-> install Quetzal, run `init`, write a first suite, and run the benchmark for you.
+> **In a hurry?** Hand your coding agent the [kick-off prompt](docs/kickoff-prompt.md) — it installs
+> Quetzal, runs `init`, **explores your code to generate an eval suite** (questions + code-derived
+> ground truth), and runs a first benchmark for you.
 
 Run `init` from inside the repo you want to benchmark — it scaffolds everything:
 

@@ -7,41 +7,76 @@ you're running.
 
 ---
 
-## 1. Set up Quetzal on this repo
+## 1. Learn this repo and generate an eval suite
+
+This is the main one: the agent explores the codebase, writes benchmark questions with
+**code-derived** ground truth, and runs a first benchmark. Paste it from the repo root.
 
 ```text
-Set up the `quetzal-eval` benchmark on this repository. Do each step and report the result:
+Set up Quetzal on this repository, then learn the codebase and generate an eval suite we can
+benchmark a coding agent against. Work through the phases and report as you go.
 
-1. Install and confirm the CLI:
-   - `uv tool install quetzal-eval`  (or `pip install quetzal-eval`)
-     - If uv reports "No solution found" for a version you know is published, its
-       index cache is stale — add `--refresh` (and `--force` to replace an
-       installed copy): `uv tool install quetzal-eval --refresh --force`.
-   - `quetzal --version`
-   - `quetzal agents`      (shows which harness CLIs are installed)
+PHASE 0 — Install & init:
+- `uv tool install quetzal-eval` (or `pip install quetzal-eval`). If uv says "No solution found"
+  for a version you know is published, its index cache is stale — add `--refresh --force`.
+- `quetzal --version`, then `quetzal agents`.
+- From the repo root run `quetzal init` — pick THIS harness and a README-detail level.
 
-2. From the repo root, run `quetzal init` — pick THIS harness when asked, and a README-detail
-   level (concise / balanced / thorough). Then show the generated quetzal.toml and list the hook
-   files it installed.
+PHASE 1 — Explore (actually read the code, don't skim):
+- Map the repo: top-level layout, the main modules/packages, entry points, and the key data and
+  control flows. Identify 2–4 distinct code areas worth benchmarking (e.g. an auth module, a
+  request pipeline, a storage layer).
+- For each area, read the files that define its behavior: public API, important functions, config,
+  error handling, and any non-obvious logic. Note the specific files/functions as you go.
 
-3. Choose ONE meaningful code area that actually exists in this repo and register it as a suite in
-   quetzal.toml under [suites], e.g. `core = ["src/core"]`.
+PHASE 2 — Register suites:
+- In quetzal.toml under [suites], add one entry per area mapping a short suite name to its code
+  root(s), e.g. `auth = ["src/auth"]`, `pipeline = ["src/pipeline", "src/queue"]`.
 
-4. Write 3 benchmark questions for that suite in suites/<suite>.json. For each: a specific question
-   about that code area, plus a `ground_truth` answer DERIVED FROM THE CODE — read the files and
-   cite the key files/functions it comes from. Set "reviewed": false. Don't guess; if you can't
-   ground an answer in the code, choose a different question.
+PHASE 3 — Write questions (the important part):
+For each suite, write ~5 questions in suites/<suite>.json (a JSON list). Spread across difficulty
+(easy / medium / hard) and types:
+  - "How does <feature> work?" (a flow spanning a few files)
+  - "Where / in which function is <behavior> implemented?"
+  - "What happens when <specific input / edge case / error>?"
+  - "Why is <non-obvious design choice> done this way?" (only if the code or comments show it)
 
-5. Run the pipeline on just that suite (keep it cheap with --limit):
-   - `quetzal run --suite <suite> --agent <this-harness> --limit 3`   (note the session id printed)
-   - `quetzal score <session-id>`
-   - `quetzal report <session-id>`
+Rules for GOOD eval questions:
+  - Answerable ONLY by reading THIS repo's code — not from general knowledge, and not guessable
+    from the wording. Don't leak the answer into the question.
+  - Each has a single, checkable answer. Avoid vague/subjective questions a judge can't grade.
+  - ground_truth: 2–4 sentences stating what a correct answer MUST contain, DERIVED FROM THE CODE
+    you read, and citing the key files/functions (e.g. "see refresh_token() in
+    src/auth/tokens.py"). If you can't ground it in code, drop the question.
 
-6. Summarize: accuracy, average tokens/cost per question, and any question the agent got wrong —
-   a wrong answer is a signal that part of the codebase is hard to navigate or under-documented.
+Each case has this shape:
+  {
+    "id": "<suite>_<short_slug>",
+    "service": "<suite>",
+    "question": "...",
+    "ground_truth": "Derived from the code: ... (cite files/functions).",
+    "difficulty": "easy|medium|hard",
+    "tags": ["..."],
+    "reviewed": false
+  }
+Keep "reviewed": false — these are drafts a human confirms later.
+
+PHASE 4 — Smoke-test & report:
+- Sanity-check the pipeline cheaply: `quetzal run --all --agent <this-harness> --limit 3`
+  (--limit caps the TOTAL questions run, so this runs 3 across all suites — enough to confirm it
+  works end to end; note the session id it prints).
+- `quetzal score <session-id>` then `quetzal report <session-id>`.
+- Report: the suites you created and how many questions each has; the smoke-run accuracy and
+  tokens/cost; and any answer that looks mis-graded (usually means the ground_truth needs
+  tightening, not that the agent was wrong).
+
+Finally, tell me to review the drafts in `quetzal ui`, flip the solid ones to "reviewed": true,
+and then run the full benchmark with `quetzal run --all`.
 ```
 
-After this you can add more suites via `quetzal ui` (a local web console) and re-run.
+Two notes: ground truth is only as trustworthy as the reading behind it — skim the report for
+mis-grades and tighten those cases. And keep `reviewed: false` until a human has eyeballed each one;
+that flag is what separates drafts from a benchmark you trust.
 
 ---
 
