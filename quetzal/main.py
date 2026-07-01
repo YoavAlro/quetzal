@@ -30,7 +30,7 @@ from quetzal.ui.__main__ import main as ui_command
     help="Codebase documentation-QA eval harness: answer repo questions with a real "
     "coding-agent harness, judge the answers, and report accuracy + token cost per service."
 )
-@click.version_option(package_name="quetzal", message="%(version)s")
+@click.version_option(package_name="quetzal-eval", message="%(version)s")
 def cli() -> None:
     pass
 

@@ -1,0 +1,31 @@
+name: Release to PyPI
+
+# Publishes to PyPI via Trusted Publishing (OIDC) — no API token stored.
+# Fires when a GitHub Release is published; can also be run manually to retry.
+# One-time setup on PyPI: add a "pending publisher" for project `quetzal-eval`
+# pointing at this repo (owner/repo) and workflow file `release.yml`.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pypi-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # required for Trusted Publishing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build sdist and wheel
+        run: |
+          python -m pip install --upgrade build
+          python -m build
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
