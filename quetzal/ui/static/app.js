@@ -149,6 +149,9 @@ $("modal-close").onclick = closeModal;
 $("modal-cancel").onclick = closeModal;
 $("add-btn").onclick = () => openModal(null);
 $("modal-bg").onclick = (e) => { if (e.target === $("modal-bg")) closeModal(); };
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && $("modal-bg").classList.contains("show")) closeModal();
+});
 
 $("modal-save").onclick = async () => {
   const body = {
@@ -181,6 +184,7 @@ async function loadHistory() {
   if (!sessions.length) {
     wrap.innerHTML = `<div class="empty">No runs yet. Run the benchmark, then refresh.</div>`;
     $("trend-chart").innerHTML = "";
+    $("runs-table").innerHTML = "";
     return;
   }
   wrap.innerHTML = sessions
@@ -197,6 +201,8 @@ async function loadHistory() {
     .join("");
   wrap.querySelectorAll("[data-session]").forEach((c) => (c.onclick = () => showSession(c.dataset.session)));
 
+  renderRunsTable(sessions);
+
   historyCache = await api.history();
   const sel = $("trend-service");
   const names = Object.keys(historyCache.per_service).sort();
@@ -208,6 +214,36 @@ async function loadHistory() {
 }
 
 const fmt = (n) => (n == null ? "—" : Number(n).toLocaleString());
+const fmtDate = (s) => (s ? String(s).slice(0, 16).replace("T", " ") : "—");
+const acc = (p) => (p >= 80 ? "easy" : p >= 50 ? "medium" : "hard");
+
+function renderRunsTable(sessions) {
+  const rows = sessions
+    .map((s) => {
+      const o = s.overall || {};
+      return `<tr class="row" data-session="${esc(s.session_id)}">
+        <td class="q-id">${esc(s.session_id)}</td>
+        <td class="muted">${fmtDate(s.started_at)}</td>
+        <td>${esc(s.agent_client || "?")}</td>
+        <td class="muted">${esc(s.agent_model || "default")}</td>
+        <td class="muted">${esc(s.judge_model || "—")}</td>
+        <td><span class="chip ${acc(o.accuracy_pct ?? 0)}">${o.accuracy_pct ?? 0}%</span></td>
+        <td>${o.correct ?? 0}/${o.judged ?? 0}</td>
+        <td>${fmt(o.avg_tokens)}</td>
+        <td>${fmt(o.total_tokens)}</td>
+        <td>${o.total_cost_usd != null ? "$" + o.total_cost_usd : "—"}</td>
+      </tr>`;
+    })
+    .join("");
+  $("runs-table").innerHTML = `<table>
+    <thead><tr>
+      <th>Session</th><th>Date</th><th>Agent</th><th>Model</th><th>Judge</th>
+      <th>Accuracy</th><th>Correct</th><th>Avg tok</th><th>Total tok</th><th>Cost</th>
+    </tr></thead>
+    <tbody>${rows}</tbody></table>`;
+  $("runs-table").querySelectorAll("[data-session]").forEach((r) =>
+    (r.onclick = () => showSession(r.dataset.session)));
+}
 
 function renderTrend() {
   if (!historyCache) return;

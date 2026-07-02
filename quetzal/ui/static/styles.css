@@ -198,6 +198,13 @@ tr.row:hover { background: var(--gray-50); }
 .scard .meta { font-size: 12px; color: var(--text-muted); }
 .scard .model { display: inline-block; margin-top: 8px; font-size: 11px; font-weight: 700; background: var(--gray-100); color: var(--gray-600); padding: 3px 8px; border-radius: 8px; }
 
+/* Runs table (score history) */
+#runs-table { overflow: hidden; }
+#runs-table table { display: table; }
+#runs-table tr.row { cursor: pointer; }
+#runs-table th:first-child, #runs-table td:first-child { padding-left: 16px; }
+#runs-table th:last-child, #runs-table td:last-child { padding-right: 16px; }
+
 .chart-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .chart-head h3 { margin: 0; font-size: 15px; }
 .chart svg { width: 100%; height: auto; display: block; }
