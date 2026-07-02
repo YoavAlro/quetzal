@@ -1,38 +1,43 @@
-/* Quetzal console styles (Emerix-inspired design tokens).
-   Tokens mirror ts/packages/web-components theme (Manrope, brand orange #FF6030,
-   navy #3D6699, warm-gray scale). Build-free: no preprocessor, no framework. */
+/* Quetzal console styles — Quetzal brand theme.
+   Palette derives from the mascot: ink navy #183054 + a teal->green gradient
+   (#1C8A7C -> #17C07D) on a cool off-white. See docs/design.md for the system.
+   Build-free: no preprocessor, no framework. */
 
 @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
 
 :root {
-  --orange: #ff6030;
-  --orange-light: #ff7d45;
-  --orange-tint: #ffe5dd;
-  --orange-glow: rgba(255, 96, 48, 0.15);
-  --navy: #3d6699;
-  --navy-dark: #2c4f7a;
+  /* Brand */
+  --navy: #183054;          /* ink / wordmark / primary dark */
+  --navy-deep: #0f2340;
+  --teal: #1c8a7c;          /* gradient start */
+  --green: #12a06e;         /* primary accent */
+  --green-bright: #17c07d;  /* gradient end / hover */
+  --green-tint: #e4f5ee;    /* selected background */
+  --green-glow: rgba(18, 160, 110, 0.18);
+  --brand-gradient: linear-gradient(135deg, var(--teal) 0%, var(--green-bright) 100%);
 
-  --gray-50: #f3f3ee;
-  --gray-100: #e8e7e0;
-  --gray-200: #dbd9d2;
-  --gray-300: #ceccc3;
-  --gray-400: #b8b5ac;
-  --gray-500: #8b8a87;
-  --gray-600: #494642;
-  --gray-700: #353431;
-  --gray-800: #232221;
-  --gray-900: #1a1918;
+  /* Cool neutral (slate) scale — pairs with navy */
+  --gray-50: #f4f6f8;
+  --gray-100: #e9edf1;
+  --gray-200: #dce2e9;
+  --gray-300: #c7d0da;
+  --gray-400: #9aabb9;
+  --gray-500: #68798a;
+  --gray-600: #3f4f5e;
+  --gray-700: #2b3947;
+  --gray-800: #1c2733;
+  --gray-900: #121b25;
 
-  --success: #13b76a;
-  --error: #b00000;
-  --warning: #ff6811;
-  --info: #009aaa;
+  --success: #12a06e;
+  --error: #c0392b;
+  --warning: #c77d0a;
+  --info: #1c8a7c;
 
-  --bg: #f3f3ee;
+  --bg: #f4f6f8;
   --surface: #ffffff;
-  --text: #232221;
-  --text-muted: #8b8a87;
-  --border: #dbd9d2;
+  --text: #16293f;
+  --text-muted: #68798a;
+  --border: #dce2e9;
 
   --font: "Manrope", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   --mono: "source-code-pro", Menlo, Monaco, Consolas, monospace;
@@ -40,9 +45,9 @@
   --radius-sm: 6px;
   --radius: 8px;
   --radius-lg: 12px;
-  --shadow-sm: 0 1px 2px rgba(26, 25, 24, 0.06), 0 1px 3px rgba(26, 25, 24, 0.08);
-  --shadow-md: 0 4px 16px rgba(26, 25, 24, 0.08);
-  --shadow-pop: 0 16px 48px rgba(26, 25, 24, 0.18);
+  --shadow-sm: 0 1px 2px rgba(16, 41, 63, 0.06), 0 1px 3px rgba(16, 41, 63, 0.08);
+  --shadow-md: 0 4px 16px rgba(16, 41, 63, 0.10);
+  --shadow-pop: 0 16px 48px rgba(16, 41, 63, 0.22);
 }
 
 * { box-sizing: border-box; }
@@ -70,12 +75,8 @@ body {
   top: 0;
   z-index: 20;
 }
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px; letter-spacing: -0.02em; }
-.brand .mark {
-  width: 14px; height: 14px; border-radius: 50%;
-  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-light) 100%);
-  box-shadow: 0 0 0 4px var(--orange-glow);
-}
+.brand { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 18px; letter-spacing: -0.02em; color: var(--navy); }
+.brand .mark { height: 26px; width: auto; display: block; }
 .brand .sub { color: var(--text-muted); font-weight: 600; font-size: 13px; padding-left: 10px; border-left: 1px solid var(--border); margin-left: 4px; }
 
 .tabs { display: flex; gap: 4px; margin-left: auto; }
@@ -85,7 +86,7 @@ body {
   padding: 8px 14px; border-radius: var(--radius-sm);
 }
 .tab:hover { background: var(--gray-50); color: var(--text); }
-.tab.active { background: var(--gray-900); color: #fff; }
+.tab.active { background: var(--navy); color: #fff; }
 
 /* ---------- Layout ---------- */
 .view { display: none; }
@@ -110,7 +111,7 @@ body {
   padding: 9px 10px; border-radius: var(--radius-sm); color: var(--text); margin-bottom: 2px;
 }
 .svc:hover { background: var(--gray-50); }
-.svc.active { background: var(--orange-tint); border-color: var(--orange); }
+.svc.active { background: var(--green-tint); border-color: var(--green); }
 .svc .name { font-weight: 600; font-size: 13px; }
 .svc .count { font-size: 11px; color: var(--text-muted); }
 
@@ -129,8 +130,8 @@ body {
 .btn:hover { background: var(--gray-50); border-color: var(--gray-400); }
 .btn-primary {
   border: none; color: #fff;
-  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-light) 100%);
-  box-shadow: 0 4px 14px var(--orange-glow);
+  background: var(--brand-gradient);
+  box-shadow: 0 4px 14px var(--green-glow);
 }
 .btn-primary:hover { filter: brightness(1.03); transform: translateY(-1px); }
 .btn-ghost { border-color: transparent; background: none; color: var(--text-muted); padding: 6px 8px; }
@@ -167,7 +168,7 @@ tr.row:hover { background: var(--gray-50); }
 .toggle { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; font-size: 12px; font-weight: 600; }
 .toggle .track { width: 34px; height: 18px; border-radius: 9px; background: var(--gray-300); position: relative; transition: background .15s; }
 .toggle .track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: var(--shadow-sm); transition: left .15s; }
-.toggle.on .track { background: linear-gradient(135deg, var(--orange) 0%, var(--orange-light) 100%); }
+.toggle.on .track { background: var(--brand-gradient); }
 .toggle.on .track::after { left: 18px; }
 
 /* ---------- Modal ---------- */
@@ -191,7 +192,7 @@ tr.row:hover { background: var(--gray-50); }
 .history-wrap { padding: 20px 24px; display: grid; gap: 20px; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
 .scard { cursor: pointer; padding: 16px; }
-.scard:hover { border-color: var(--orange); }
+.scard:hover { border-color: var(--green); }
 .scard .sid { font-family: var(--mono); font-size: 12px; color: var(--text-muted); }
 .scard .big { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin: 6px 0 2px; }
 .scard .meta { font-size: 12px; color: var(--text-muted); }

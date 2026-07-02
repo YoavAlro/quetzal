@@ -126,11 +126,9 @@ def _overall(all_stats) -> dict:
     }
 
 
-@click.command()
-@click.argument("session_id")
-@click.option("--json", "as_json", is_flag=True, help="Print raw JSON instead of a table.")
-def main(session_id: str, as_json: bool) -> None:
-    """Aggregate and display a scored session."""
+def render_report(session_id: str, as_json: bool = False) -> None:
+    """Aggregate a session, write report.json, and print it. Shared by the
+    `report` command and by `run`'s default end-of-run summary."""
     try:
         exists = SessionStore(session_id).exists()
     except ValueError as exc:
@@ -169,6 +167,14 @@ def main(session_id: str, as_json: bool) -> None:
         f"avg {overall['avg_tokens']:,} tok/question, {overall['total_tokens']:,} tok total{cost}."
     )
     _console.print(f"Wrote {out_path}")
+
+
+@click.command()
+@click.argument("session_id")
+@click.option("--json", "as_json", is_flag=True, help="Print raw JSON instead of a table.")
+def main(session_id: str, as_json: bool) -> None:
+    """Aggregate and display a scored session."""
+    render_report(session_id, as_json=as_json)
 
 
 if __name__ == "__main__":

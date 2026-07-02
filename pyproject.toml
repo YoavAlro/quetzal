@@ -1,6 +1,6 @@
 [project]
 name = "quetzal-eval"
-version = "0.1.2"
+version = "0.2.0"
 description = "Measure how well and how cheaply a coding-agent harness answers questions about your codebase. Drives real agent CLIs (Claude Code, Codex, Cursor), judges answers against ground truth, and reports accuracy + token cost per suite."
 readme = "README.md"
 requires-python = ">=3.11"

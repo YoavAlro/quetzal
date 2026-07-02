@@ -23,21 +23,14 @@ load_dotenv()
 _console = Console()
 
 
-@click.command()
-@click.argument("session_id", required=False)
-@click.option("--judge", "-J", type=click.Choice(list_judges()), default="claude-code", help="Judge backend.")
-@click.option("--judge-model", "-j", default=None, help="Judge model (default: the backend's own default).")
-@click.option("--force", "-f", is_flag=True, help="Re-judge cases that already have a verdict.")
-@click.option("--list", "list_only", is_flag=True, help="List available sessions and exit.")
-def main(session_id: str | None, judge: str, judge_model: str | None, force: bool, list_only: bool) -> None:
-    """Grade every answered case in a session and store the verdicts."""
-    if list_only or not session_id:
-        sessions = SessionStore.list_sessions()
-        _console.print("Available sessions:" if sessions else "No sessions found.")
-        for name in sessions:
-            _console.print(f"  {name}")
-        return
+def score_session(
+    session_id: str, judge: str = "claude-code", judge_model: str | None = None, force: bool = False
+) -> int:
+    """Judge every answered case in a session and store the verdicts.
 
+    Shared by the `score` command and by `run`'s default post-answer scoring.
+    Returns the number of cases judged this pass.
+    """
     try:
         store = SessionStore(session_id)
     except ValueError as exc:
@@ -85,7 +78,26 @@ def main(session_id: str | None, judge: str, judge_model: str | None, force: boo
         _console.print(f"  {mark} {result.case.service}/{result.case.id}  score={verdict.score}")
 
     suffix = f" ({failed} judge error(s) skipped — re-run score to retry)" if failed else ""
-    _console.print(f"\nJudged {judged} case(s).{suffix}")
+    _console.print(f"Judged {judged} case(s).{suffix}")
+    return judged
+
+
+@click.command()
+@click.argument("session_id", required=False)
+@click.option("--judge", "-J", type=click.Choice(list_judges()), default="claude-code", help="Judge backend.")
+@click.option("--judge-model", "-j", default=None, help="Judge model (default: the backend's own default).")
+@click.option("--force", "-f", is_flag=True, help="Re-judge cases that already have a verdict.")
+@click.option("--list", "list_only", is_flag=True, help="List available sessions and exit.")
+def main(session_id: str | None, judge: str, judge_model: str | None, force: bool, list_only: bool) -> None:
+    """Grade every answered case in a session and store the verdicts."""
+    if list_only or not session_id:
+        sessions = SessionStore.list_sessions()
+        _console.print("Available sessions:" if sessions else "No sessions found.")
+        for name in sessions:
+            _console.print(f"  {name}")
+        return
+
+    score_session(session_id, judge=judge, judge_model=judge_model, force=force)
     _console.print(f"Next: [cyan]quetzal report {session_id}[/cyan]")
 
 

@@ -53,16 +53,17 @@ The shipped `quetzal.toml` points at this repository, with one self-referential 
 it runs out of the box:
 
 ```bash
-quetzal run --all --agent claude-code     # answer every suite's questions
-quetzal score <session-id> --judge claude-code
-quetzal report <session-id>
+quetzal run --all --agent claude-code     # answer → judge → report, in one command
 ```
 
-`run` prints the `<session-id>` (e.g. `quetzal-20260629-101500`) when it finishes. Or chain all
-three with the wrapper:
+By default `run` answers every question, **judges** the answers, and prints the **report** — the
+whole pipeline. Stop earlier with `--no-score` (just answer) or `--no-report`, and pin the judge
+with `--judge` / `--judge-model`. The individual steps are still there if you want them separately:
 
 ```bash
-./run-benchmark.sh --all                  # AGENT=codex ./run-benchmark.sh quetzal
+quetzal run --all --no-score              # just answer (prints the <session-id>)
+quetzal score <session-id>                # judge later
+quetzal report <session-id>               # re-print the summary
 ```
 
 Smoke a single suite without spending much: `quetzal run --suite quetzal --limit 2`.
@@ -149,7 +150,8 @@ quetzal ui          # → http://127.0.0.1:8765
 - **Score history** tab — every past run as a card (overall accuracy + avg tokens + model), a
   per-suite accuracy/token trend chart across runs, and a click-through per-suite breakdown.
 
-Local-only, no auth — don't expose the port publicly.
+Local-only, no auth — don't expose the port publicly. Styled in the Quetzal brand theme (navy +
+teal→green); the palette, type, and component tokens are documented in [docs/design.md](docs/design.md).
 
 ## Keeping module docs fresh
 

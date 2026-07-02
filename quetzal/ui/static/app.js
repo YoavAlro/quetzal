@@ -231,32 +231,32 @@ function lineChart(series, metric) {
     .map((f) => {
       const y = pad.t + f * (H - pad.t - pad.b);
       const val = Math.round(ymax * (1 - f));
-      return `<line x1="${pad.l}" y1="${y}" x2="${W - pad.r}" y2="${y}" stroke="#e8e7e0" />
-        <text x="${pad.l - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#8b8a87">${val}${isPct ? "%" : ""}</text>`;
+      return `<line x1="${pad.l}" y1="${y}" x2="${W - pad.r}" y2="${y}" stroke="#e9edf1" />
+        <text x="${pad.l - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#68798a">${val}${isPct ? "%" : ""}</text>`;
     })
     .join("");
 
   const path = ys.map((v, i) => `${i ? "L" : "M"}${px(i)},${py(v)}`).join(" ");
   const area = `${path} L${px(xs.length - 1)},${py(0)} L${px(0)},${py(0)} Z`;
   const dots = ys
-    .map((v, i) => `<circle cx="${px(i)}" cy="${py(v)}" r="4" fill="#ff6030"><title>${esc(series[i].session_id)}: ${v}${isPct ? "%" : ""}</title></circle>`)
+    .map((v, i) => `<circle cx="${px(i)}" cy="${py(v)}" r="4" fill="#12a06e"><title>${esc(series[i].session_id)}: ${v}${isPct ? "%" : ""}</title></circle>`)
     .join("");
   const labels = series
     .map((p, i) => (i % Math.ceil(series.length / 8 || 1) === 0
-      ? `<text x="${px(i)}" y="${H - pad.b + 18}" text-anchor="middle" font-size="10" fill="#8b8a87">${esc((p.started_at || "").slice(5, 10))}</text>`
+      ? `<text x="${px(i)}" y="${H - pad.b + 18}" text-anchor="middle" font-size="10" fill="#68798a">${esc((p.started_at || "").slice(5, 10))}</text>`
       : ""))
     .join("");
 
   return `<svg viewBox="0 0 ${W} ${H}" class="chartsvg">
     <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#ff6030" stop-opacity="0.18"/><stop offset="100%" stop-color="#ff6030" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#12a06e" stop-opacity="0.18"/><stop offset="100%" stop-color="#12a06e" stop-opacity="0"/>
     </linearGradient></defs>
     ${grid}
     <path d="${area}" fill="url(#g)" />
-    <path d="${path}" fill="none" stroke="#ff6030" stroke-width="2.5" stroke-linejoin="round" />
+    <path d="${path}" fill="none" stroke="#12a06e" stroke-width="2.5" stroke-linejoin="round" />
     ${dots}${labels}
   </svg>
-  <div class="legend"><span><i style="background:#ff6030"></i>${isPct ? "Accuracy" : "Avg tokens"} per run (oldest → newest)</span></div>`;
+  <div class="legend"><span><i style="background:#12a06e"></i>${isPct ? "Accuracy" : "Avg tokens"} per run (oldest → newest)</span></div>`;
 }
 
 async function showSession(id) {
