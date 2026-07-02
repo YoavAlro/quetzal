@@ -56,10 +56,8 @@ Each case has this shape:
     "question": "...",
     "ground_truth": "Derived from the code: ... (cite files/functions).",
     "difficulty": "easy|medium|hard",
-    "tags": ["..."],
-    "reviewed": false
+    "tags": ["..."]
   }
-Keep "reviewed": false — these are drafts a human confirms later.
 
 PHASE 4 — Smoke-test & report:
 - Sanity-check the pipeline cheaply: `quetzal run --all --agent <this-harness> --limit 3`
@@ -70,13 +68,13 @@ PHASE 4 — Smoke-test & report:
   tokens/cost; and any answer that looks mis-graded (usually means the ground_truth needs
   tightening, not that the agent was wrong).
 
-Finally, tell me to review the drafts in `quetzal ui`, flip the solid ones to "reviewed": true,
-and then run the full benchmark with `quetzal run --all`.
+Finally, tell me to review the questions in `quetzal ui`, prune or tighten any weak ones, and then
+run the full benchmark with `quetzal run --all`.
 ```
 
-Two notes: ground truth is only as trustworthy as the reading behind it — skim the report for
-mis-grades and tighten those cases. And keep `reviewed: false` until a human has eyeballed each one;
-that flag is what separates drafts from a benchmark you trust.
+One note: ground truth is only as trustworthy as the reading behind it — eyeball each question in
+`quetzal ui`, skim the report for mis-grades, and tighten those cases. Each suite's latest score
+then shows in the console so you can see how it's tracking.
 
 ---
 

@@ -5,35 +5,42 @@
     "question": "What are the three pipeline steps in Quetzal and what does each one produce?",
     "ground_truth": "Quetzal runs a three-step pipeline, each a standalone CLI reading the previous step's output: (1) RUN ('quetzal run') answers questions with the chosen agent harness and stores one result file per question with the answer and token usage; (2) SCORE ('quetzal score') has a judge grade each stored answer against its ground truth, adding a verdict (correct + 1-5 score + justification); (3) REPORT ('quetzal report') aggregates per-suite and overall accuracy, average/total tokens, and cost, writing report.json and printing a table. See quetzal/cli.py, quetzal/score.py, quetzal/report.py.",
     "difficulty": "easy",
-    "tags": ["pipeline", "overview"],
-    "reviewed": true
+    "tags": [
+      "pipeline",
+      "overview"
+    ]
   },
   {
     "id": "quetzal_real_harness_not_api",
     "service": "quetzal",
     "question": "How does Quetzal stay harness-agnostic for the answerer, and why does it drive real CLIs instead of the raw model API?",
-    "ground_truth": "Each answerer is an AgentClient adapter (quetzal/agents/) that shells out to a real coding-agent CLI headless (Claude Code, Codex, Cursor, opencode) and reads that harness's own answer and token/cost telemetry. A lazy registry (quetzal/agents/registry.py) maps the --agent name to its adapter via an import string, so selecting one client never imports another's dependencies. It drives the real CLI rather than the raw API because the harness — its system prompt, tool loop, and context gathering — is the thing under test; a raw-API reimplementation would lose exactly what we want to measure.",
+    "ground_truth": "Each answerer is an AgentClient adapter (quetzal/agents/) that shells out to a real coding-agent CLI headless (Claude Code, Codex, Cursor, opencode) and reads that harness's own answer and token/cost telemetry. A lazy registry (quetzal/agents/registry.py) maps the --agent name to its adapter via an import string, so selecting one client never imports another's dependencies. It drives the real CLI rather than the raw API because the harness \u2014 its system prompt, tool loop, and context gathering \u2014 is the thing under test; a raw-API reimplementation would lose exactly what we want to measure.",
     "difficulty": "medium",
-    "tags": ["agents", "design"],
-    "reviewed": true
+    "tags": [
+      "agents",
+      "design"
+    ]
   },
   {
     "id": "quetzal_suite_definition",
     "service": "quetzal",
     "question": "Where are question suites stored, and what defines a suite's code roots?",
-    "ground_truth": "Questions live as JSON, one file per suite, under the configured suites_dir (default ./suites, see quetzal/config.py SUITES_DIR); each file is a JSON list of question objects read/written by quetzal/datasets/store.py. A suite's code roots — the starting hint handed to the agent — come from the [suites] table in quetzal.toml (config.SUITE_ROOTS), mapping a suite name to a list of paths relative to target_repo. A suite is 'known' if it has a JSON file or a [suites] entry; a suite can exist as questions-only with no roots.",
+    "ground_truth": "Questions live as JSON, one file per suite, under the configured suites_dir (default ./suites, see quetzal/config.py SUITES_DIR); each file is a JSON list of question objects read/written by quetzal/datasets/store.py. A suite's code roots \u2014 the starting hint handed to the agent \u2014 come from the [suites] table in quetzal.toml (config.SUITE_ROOTS), mapping a suite name to a list of paths relative to target_repo. A suite is 'known' if it has a JSON file or a [suites] entry; a suite can exist as questions-only with no roots.",
     "difficulty": "medium",
-    "tags": ["datasets", "config"],
-    "reviewed": true
+    "tags": [
+      "datasets",
+      "config"
+    ]
   },
   {
     "id": "quetzal_judge_default",
     "service": "quetzal",
     "question": "What does the judge return, and which judge backend is the default that needs no API credentials?",
-    "ground_truth": "The judge returns a JudgeVerdict (quetzal/judge/prompt.py): correct (bool), score (integer 1-5), and a one-or-two-sentence justification. The default judge backend is 'claude-code' (quetzal/judge/claude_judge.py), which shells out to `claude -p` for a JSON verdict and therefore needs no API/provider credentials — only the authenticated Claude Code CLI. It runs with the read-only tool allowlist so grading can never mutate the repo under test.",
+    "ground_truth": "The judge returns a JudgeVerdict (quetzal/judge/prompt.py): correct (bool), score (integer 1-5), and a one-or-two-sentence justification. The default judge backend is 'claude-code' (quetzal/judge/claude_judge.py), which shells out to `claude -p` for a JSON verdict and therefore needs no API/provider credentials \u2014 only the authenticated Claude Code CLI. It runs with the read-only tool allowlist so grading can never mutate the repo under test.",
     "difficulty": "medium",
-    "tags": ["judge"],
-    "reviewed": true
+    "tags": [
+      "judge"
+    ]
   },
   {
     "id": "quetzal_readonly_enforcement",
@@ -41,7 +48,9 @@
     "question": "How does Quetzal ensure the answerer agent cannot modify the repository it is exploring?",
     "ground_truth": "Read-only is enforced per CLI, never by trusting the model. The Claude Code adapter passes --allowedTools limited to Read/Grep/Glob/LS (config.CLAUDE_ALLOWED_TOOLS) and never passes a skip-permissions flag; the Codex adapter runs with --sandbox read-only. The judge's Claude Code invocation also pins the same read-only allowlist. See quetzal/agents/claude_code.py, quetzal/agents/codex.py, and quetzal/judge/claude_judge.py.",
     "difficulty": "hard",
-    "tags": ["security", "read-only"],
-    "reviewed": true
+    "tags": [
+      "security",
+      "read-only"
+    ]
   }
 ]

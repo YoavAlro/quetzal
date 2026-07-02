@@ -42,7 +42,6 @@ class QuestionPayload(BaseModel):
     ground_truth: str
     difficulty: str = "medium"
     tags: list[str] = Field(default_factory=list)
-    reviewed: bool = False
 
 
 def _slugify(service: str, question: str, existing: set[str]) -> str:
@@ -68,25 +67,29 @@ def _case_dict(case: QuestionCase) -> dict:
         "ground_truth": case.ground_truth,
         "difficulty": case.difficulty,
         "tags": list(case.tags),
-        "reviewed": case.reviewed,
     }
 
 
 @app.get("/api/services")
 def get_services() -> list[dict]:
-    """Service suites with question counts and review progress."""
+    """Service suites with question counts and their latest benchmark score."""
+    history = build_history()["per_service"]
     out = []
     for service in list_services():
         cases = load_cases(service)
         by_difficulty: dict[str, int] = {}
         for case in cases:
             by_difficulty[case.difficulty] = by_difficulty.get(case.difficulty, 0) + 1
+        points = history.get(service, [])
+        latest = points[-1] if points else None
         out.append(
             {
                 "name": service,
                 "code_roots": list(SERVICE_ROOTS.get(service, ())),
                 "total": len(cases),
-                "reviewed": sum(1 for c in cases if c.reviewed),
+                "latest_score": latest["accuracy_pct"] if latest else None,
+                "latest_session": latest["session_id"] if latest else None,
+                "latest_at": latest["started_at"] if latest else None,
                 "by_difficulty": by_difficulty,
             }
         )
@@ -117,7 +120,6 @@ def create_question(service: str, payload: QuestionPayload) -> dict:
         ground_truth=payload.ground_truth,
         difficulty=payload.difficulty,
         tags=tuple(payload.tags),
-        reviewed=payload.reviewed,
     )
     upsert_case(service, case)
     return _case_dict(case)
@@ -135,7 +137,6 @@ def update_question(service: str, case_id: str, payload: QuestionPayload) -> dic
         ground_truth=payload.ground_truth,
         difficulty=payload.difficulty,
         tags=tuple(payload.tags),
-        reviewed=payload.reviewed,
     )
     upsert_case(service, case)
     return _case_dict(case)

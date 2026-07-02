@@ -109,14 +109,12 @@ Then write questions. Use the UI (below) or drop a `suites/<name>.json` file —
   "question": "How are refresh tokens rotated?",
   "ground_truth": "Derived from the code: on each refresh the old token is revoked and ...",
   "difficulty": "medium",
-  "tags": ["tokens"],
-  "reviewed": false
+  "tags": ["tokens"]
 }
 ```
 
 Ground truth should be **derived from the code**, not guessed, so the benchmark can detect a doc
-that's wrong or incomplete. Cases start `reviewed: false`; flip to `true` once a human verifies the
-answer. Every value in `quetzal.toml` is overridable by env var (`QUETZAL_TARGET_REPO`,
+that's wrong or incomplete. Every value in `quetzal.toml` is overridable by env var (`QUETZAL_TARGET_REPO`,
 `QUETZAL_SUITES_DIR`, `QUETZAL_RESULTS_DIR`, `QUETZAL_CONFIG`) for CI and ad-hoc runs.
 
 ## Agents (answerer) and the judge
@@ -145,10 +143,10 @@ A local, build-free web console to manage question suites and view score history
 quetzal ui          # → http://127.0.0.1:8765
 ```
 
-- **Questions** tab — per-suite add / edit / delete, set difficulty and tags, flip `reviewed`
-  inline. Edits write straight to the JSON suite files.
-- **Score history** tab — every past run as a card (overall accuracy + avg tokens + model), a
-  per-suite accuracy/token trend chart across runs, and a click-through per-suite breakdown.
+- **Questions** tab — per-suite add / edit / delete, set difficulty and tags; each suite shows its
+  latest benchmark score in the sidebar. Edits write straight to the JSON suite files.
+- **Score history** tab — every past run as a card and in an all-runs table (accuracy, tokens,
+  cost, agent, judge), a per-suite accuracy/token trend chart, and a click-through breakdown.
 
 Local-only, no auth — don't expose the port publicly. Styled in the Quetzal brand theme (navy +
 teal→green); the palette, type, and component tokens are documented in [docs/design.md](docs/design.md).

@@ -51,8 +51,11 @@ async function loadServices() {
   state.services.forEach((svc) => {
     const btn = document.createElement("button");
     btn.className = "svc" + (state.current === svc.name ? " active" : "");
+    const score = svc.latest_score != null
+      ? `<span class="chip ${acc(svc.latest_score)}">${svc.latest_score}%</span>`
+      : `<span class="muted">not run</span>`;
     btn.innerHTML = `<span class="name">${esc(svc.name)}</span>
-      <span class="count">${svc.reviewed}/${svc.total} reviewed</span>`;
+      <span class="count">${svc.total} q · ${score}</span>`;
     btn.onclick = () => selectService(svc.name);
     list.appendChild(btn);
   });
@@ -87,7 +90,6 @@ function renderTable() {
       </td>
       <td><span class="chip ${esc(q.difficulty)}">${esc(q.difficulty)}</span></td>
       <td><div class="gt">${esc(q.ground_truth)}</div></td>
-      <td>${toggleHtml(q)}</td>
       <td class="cell-actions">
         <button class="btn btn-sm" data-edit="${esc(q.id)}">Edit</button>
         <button class="btn btn-sm btn-danger" data-del="${esc(q.id)}">Delete</button>
@@ -96,26 +98,11 @@ function renderTable() {
     )
     .join("");
   wrap.innerHTML = `<table>
-    <thead><tr><th>Question</th><th>Difficulty</th><th>Ground truth</th><th>Reviewed</th><th></th></tr></thead>
+    <thead><tr><th>Question</th><th>Difficulty</th><th>Ground truth</th><th></th></tr></thead>
     <tbody>${rows}</tbody></table>`;
 
   wrap.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => openModal(b.dataset.edit)));
   wrap.querySelectorAll("[data-del]").forEach((b) => (b.onclick = () => removeQuestion(b.dataset.del)));
-  wrap.querySelectorAll("[data-toggle]").forEach((b) => (b.onclick = () => toggleReviewed(b.dataset.toggle)));
-}
-
-const toggleHtml = (q) =>
-  `<span class="toggle ${q.reviewed ? "on" : ""}" data-toggle="${esc(q.id)}">
-     <span class="track"></span>${q.reviewed ? '<span class="badge-reviewed">yes</span>' : '<span class="badge-pending">pending</span>'}
-   </span>`;
-
-async function toggleReviewed(id) {
-  const q = state.questions.find((x) => x.id === id);
-  await api.update(state.current, id, { ...q, reviewed: !q.reviewed });
-  q.reviewed = !q.reviewed;
-  renderTable();
-  loadServices();
-  toast(q.reviewed ? "Marked reviewed" : "Marked pending");
 }
 
 async function removeQuestion(id) {
@@ -138,13 +125,10 @@ function openModal(id) {
   $("f-tags").value = q ? q.tags.join(", ") : "";
   $("f-id").value = q ? q.id : "";
   $("f-id").disabled = !!q;
-  setToggle($("f-reviewed-toggle"), q ? q.reviewed : false);
   $("modal-bg").classList.add("show");
 }
 function closeModal() { $("modal-bg").classList.remove("show"); }
 
-function setToggle(elm, on) { elm.classList.toggle("on", on); elm.dataset.on = on ? "1" : "0"; }
-$("f-reviewed-toggle").onclick = () => setToggle($("f-reviewed-toggle"), $("f-reviewed-toggle").dataset.on !== "1");
 $("modal-close").onclick = closeModal;
 $("modal-cancel").onclick = closeModal;
 $("add-btn").onclick = () => openModal(null);
@@ -159,7 +143,6 @@ $("modal-save").onclick = async () => {
     ground_truth: $("f-gt").value.trim(),
     difficulty: $("f-difficulty").value,
     tags: $("f-tags").value.split(",").map((t) => t.trim()).filter(Boolean),
-    reviewed: $("f-reviewed-toggle").dataset.on === "1",
     id: $("f-id").value.trim() || null,
   };
   if (!body.question || !body.ground_truth) { toast("Question and ground truth are required"); return; }

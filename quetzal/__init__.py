@@ -3,7 +3,7 @@
 Measure how well *and how cheaply* a real coding-agent harness (Claude Code,
 Codex, Cursor, ...) can answer questions about a target codebase. Quetzal drives
 the actual CLI harness — its system prompt, tools, and planning loop — rather
-than a raw-API reimplementation, then judges each answer against human-reviewed
+than a raw-API reimplementation, then judges each answer against curated
 ground truth and reports accuracy + token cost per suite.
 
 Pipeline (each step is a standalone CLI reading the previous step's output):

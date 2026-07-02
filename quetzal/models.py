@@ -7,7 +7,7 @@ Intent:
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from typing import Any
 
 
@@ -21,8 +21,6 @@ class QuestionCase:
     ground_truth: str
     difficulty: str = "medium"
     tags: tuple[str, ...] = ()
-    # Drafted from code by the harness; flip to False once a human has reviewed.
-    reviewed: bool = False
 
 
 @dataclass(frozen=True)
@@ -82,7 +80,12 @@ class CaseResult:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> CaseResult:
-        case = QuestionCase(**{**data["case"], "tags": tuple(data["case"].get("tags", ()))})
+        # Tolerate keys from older schemas (e.g. a removed "reviewed" field) so
+        # results written by a previous version still load.
+        known = {f.name for f in fields(QuestionCase)}
+        case_data = {k: v for k, v in data["case"].items() if k in known}
+        case_data["tags"] = tuple(case_data.get("tags", ()))
+        case = QuestionCase(**case_data)
         answer_run = None
         if data.get("answer_run"):
             run = dict(data["answer_run"])

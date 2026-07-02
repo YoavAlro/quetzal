@@ -33,7 +33,7 @@ Sampled from the mascot. Navy is the ink; the teal→green gradient is the one a
 | `--green-bright` | `#17c07d` | gradient end; accent hover |
 | `--green-tint` | `#e4f5ee` | selected-row / active background |
 | `--green-glow` | `rgba(18,160,110,.18)` | primary-button shadow |
-| `--brand-gradient` | `135deg, teal → green-bright` | primary buttons, the reviewed toggle |
+| `--brand-gradient` | `135deg, teal → green-bright` | primary buttons |
 
 **The accent is the gradient, not a flat color.** Primary actions carry `--brand-gradient`; navy
 carries structure (bars, active nav). Use green sparingly for state (selected, success, the trend

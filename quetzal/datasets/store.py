@@ -96,5 +96,4 @@ def _from_row(service: str, row: dict) -> QuestionCase:
         ground_truth=row["ground_truth"],
         difficulty=row.get("difficulty", "medium"),
         tags=tuple(row.get("tags", ())),
-        reviewed=bool(row.get("reviewed", False)),
     )
