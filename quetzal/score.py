@@ -21,6 +21,7 @@ from quetzal.models import Evaluation
 
 load_dotenv()
 _console = Console()
+_EARLY_ABORT_FAILURES = 3
 
 
 def score_session(
@@ -64,6 +65,11 @@ def score_session(
         except Exception as exc:  # noqa: BLE001 - one judge failure shouldn't abort the whole session
             failed += 1
             _console.print(f"  [red]judge error[/red] {result.case.service}/{result.case.id}: {str(exc)[:160]}")
+            if judged == 0 and failed >= _EARLY_ABORT_FAILURES:
+                raise click.ClickException(
+                    f"Judge failed on the first {failed} cases; aborting. "
+                    f"Fix it and re-run score. Last error: {str(exc)[:300]}"
+                ) from exc
             continue
         result.evaluation = Evaluation(
             correct=verdict.correct,

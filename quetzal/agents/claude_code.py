@@ -10,13 +10,11 @@ Assumptions:
 
 from __future__ import annotations
 
-import json
 import shutil
-import subprocess
 from typing import ClassVar
 
 from quetzal.agents.base import AgentClient, build_prompt
-from quetzal.config import AGENT_TIMEOUT_S, CLAUDE_ALLOWED_TOOLS, REPO_ROOT
+from quetzal.claude_cli import run_claude
 from quetzal.models import AnswerRun, TokenUsage
 
 
@@ -30,19 +28,8 @@ class ClaudeCodeAgent(AgentClient):
 
     def answer(self, question: str, service: str) -> AnswerRun:
         prompt = build_prompt(question, service)
-        cmd = ["claude", "-p", prompt, "--output-format", "json", "--allowedTools", *CLAUDE_ALLOWED_TOOLS]
-        if self.model:
-            cmd += ["--model", self.model]
-
-        proc = subprocess.run(
-            cmd, cwd=REPO_ROOT, capture_output=True, text=True, timeout=AGENT_TIMEOUT_S
-        )
-        if proc.returncode != 0:
-            raise RuntimeError(f"claude exited {proc.returncode}: {proc.stderr.strip()[:400]}")
-
-        data = json.loads(proc.stdout)
-        if data.get("is_error"):
-            raise RuntimeError(f"claude reported error: {str(data.get('result'))[:400]}")
+        result = run_claude(prompt, self.model, "claude", self.track_repo_usage)
+        data = result.data
 
         return AnswerRun(
             answer=data.get("result", ""),
@@ -53,6 +40,7 @@ class ClaudeCodeAgent(AgentClient):
             tool_calls=None,
             llm_calls=data.get("num_turns"),
             cost_usd=data.get("total_cost_usd"),
+            repo_usage=result.repo_usage,
         )
 
 
@@ -63,7 +51,12 @@ def _usage(usage: dict) -> TokenUsage:
         + usage.get("cache_read_input_tokens", 0)
     )
     out = usage.get("output_tokens", 0)
-    return TokenUsage(input_tokens=inp, output_tokens=out, total_tokens=inp + out)
+    return TokenUsage(
+        input_tokens=inp,
+        output_tokens=out,
+        total_tokens=inp + out,
+        cached_input_tokens=usage.get("cache_read_input_tokens", 0),
+    )
 
 
 def _dominant_model(model_usage: dict) -> str:

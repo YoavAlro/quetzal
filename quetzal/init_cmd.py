@@ -46,6 +46,9 @@ target_repo  = "."               # the codebase under test (relative to this fil
 suites_dir   = "suites"          # one <suite>.json question file per suite (curated, commit these)
 results_dir  = ".quetzal/results"  # benchmark sessions (generated, git-ignored)
 
+[evaluation]
+max_cases_per_suite = 12          # 0 disables the recurring-cost guardrail
+
 # suite name -> code root(s) relative to target_repo (the agent's starting hint).
 # Add an entry per code area you want to benchmark, e.g.:
 #   auth    = ["services/auth"]
@@ -135,7 +138,6 @@ faster and cheaper.
 
 
 # --- small filesystem helpers ------------------------------------------------
-
 def _write_if_absent(path: Path, content: str, force: bool, label: str) -> bool:
     if path.exists() and not force:
         click.echo(f"  • {label}: exists, left as-is ({path})")

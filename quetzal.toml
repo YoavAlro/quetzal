@@ -11,6 +11,9 @@ target_repo  = "."               # the codebase under test (relative to this fil
 suites_dir   = "suites"          # one <suite>.json question file per suite
 results_dir  = ".quetzal/results"  # benchmark sessions are written here (generated)
 
+[evaluation]
+max_cases_per_suite = 12          # 0 disables the recurring-cost guardrail
+
 # suite name -> code root(s) relative to target_repo (the agent's starting hint)
 [suites]
 quetzal = ["quetzal"]

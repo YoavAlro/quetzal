@@ -19,12 +19,16 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from quetzal.config import SUITES_DIR
+from quetzal.config import MAX_CASES_PER_SUITE, SUITES_DIR
 from quetzal.core.storage import validate_path_segment
 from quetzal.datasets.services import SERVICE_ROOTS
 from quetzal.models import QuestionCase
 
 DATA_DIR = SUITES_DIR
+
+
+class SuiteFullError(ValueError):
+    """A bounded suite cannot grow until an existing case is removed."""
 
 
 def list_services() -> list[str]:
@@ -75,6 +79,11 @@ def upsert_case(service: str, case: QuestionCase) -> None:
     """Insert or replace a case by id within a suite."""
     cases = load_cases(service)
     by_id = {c.id: c for c in cases}
+    if MAX_CASES_PER_SUITE and case.id not in by_id and len(by_id) >= MAX_CASES_PER_SUITE:
+        raise SuiteFullError(
+            f"Suite '{service}' is full ({len(by_id)}/{MAX_CASES_PER_SUITE} questions). "
+            "Delete or replace a weaker question first."
+        )
     by_id[case.id] = case
     save_cases(service, list(by_id.values()))
 

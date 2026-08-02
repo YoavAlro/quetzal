@@ -35,8 +35,29 @@ load_dotenv()  # provider credentials for the API baseline (.env at repo or cwd)
 @click.option("--all", "run_all", is_flag=True, help="Run every service suite.")
 @click.option("--agent", "-a", type=click.Choice(list_agents()), default=DEFAULT_AGENT, help="Answerer harness.")
 @click.option("--model", "-m", default=DEFAULT_AGENT_MODEL, help="Model for the agent (CLI default if unset).")
+@click.option("--provider", default=None, help="Codex model provider override (default: openai).")
+@click.option(
+    "--reasoning-effort",
+    type=click.Choice(["minimal", "low", "medium", "high", "xhigh"]),
+    default=None,
+    help="Codex reasoning effort override.",
+)
 @click.option("--limit", "-n", type=click.IntRange(min=1), default=None, help="Cap how many questions to run.")
-@click.option("--session", default=None, help="Session id to write to; ANY existing results for this id are replaced.")
+@click.option(
+    "--session",
+    default=None,
+    help="Session id to write to; existing results are replaced unless --retry-errors is set.",
+)
+@click.option(
+    "--retry-errors",
+    is_flag=True,
+    help="Keep successful answers in --session and re-answer only failed/missing cases.",
+)
+@click.option(
+    "--track-repo-usage/--no-track-repo-usage",
+    default=False,
+    help="Inventory repo docs/skills/hooks and observe references in structured tool events.",
+)
 @click.option("--score/--no-score", "do_score", default=True, help="Judge the answers after answering (default: on).")
 @click.option(
     "--judge", "-J", type=click.Choice(list_judges()), default="claude-code", help="Judge backend (with --score)."
@@ -51,8 +72,12 @@ def main(
     run_all: bool,
     agent: str,
     model: str | None,
+    provider: str | None,
+    reasoning_effort: str | None,
     limit: int | None,
     session: str | None,
+    retry_errors: bool,
+    track_repo_usage: bool,
     do_score: bool,
     judge: str,
     judge_model: str | None,
@@ -67,6 +92,10 @@ def main(
 
     if not service and not run_all:
         raise click.UsageError("Pass --service <name> or --all (or --agents to list harnesses).")
+    if retry_errors and not session:
+        raise click.UsageError("--retry-errors needs --session <id>.")
+    if (provider or reasoning_effort) and agent != "codex":
+        raise click.UsageError("--provider and --reasoning-effort are supported only with --agent codex.")
 
     cases = all_cases() if run_all else get_cases(service)
     if limit is not None:
@@ -75,7 +104,7 @@ def main(
         raise click.UsageError("No questions selected.")
 
     try:
-        client = build_agent(agent, model)
+        client = build_agent(agent, model, provider, reasoning_effort, track_repo_usage)
     except RuntimeError as exc:
         raise click.ClickException(str(exc)) from exc
 
@@ -90,7 +119,10 @@ def main(
 
     from quetzal.core.runner import run_cases
 
-    run_cases(cases, client, session_id)
+    try:
+        run_cases(cases, client, session_id, retry_errors=retry_errors)
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
 
     if do_score:
         from quetzal.score import score_session

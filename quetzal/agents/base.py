@@ -39,8 +39,17 @@ class AgentClient(ABC):
     name: ClassVar[str]
     install_hint: ClassVar[str] = ""
 
-    def __init__(self, model: str | None = None):
+    def __init__(
+        self,
+        model: str | None = None,
+        provider: str | None = None,
+        reasoning_effort: str | None = None,
+        track_repo_usage: bool = False,
+    ):
         self.model = model
+        self.provider = provider
+        self.reasoning_effort = reasoning_effort
+        self.track_repo_usage = track_repo_usage
 
     @classmethod
     @abstractmethod

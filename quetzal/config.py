@@ -46,14 +46,10 @@ def _resolve(value: str | None, default: Path) -> Path:
 
 
 # The codebase under test — what the answerer agent explores.
-REPO_ROOT: Final[Path] = _resolve(
-    os.environ.get("QUETZAL_TARGET_REPO") or _CONFIG.get("target_repo"), _BASE
-)
+REPO_ROOT: Final[Path] = _resolve(os.environ.get("QUETZAL_TARGET_REPO") or _CONFIG.get("target_repo"), _BASE)
 
 # Where question suites (one <suite>.json per file) live.
-SUITES_DIR: Final[Path] = _resolve(
-    os.environ.get("QUETZAL_SUITES_DIR") or _CONFIG.get("suites_dir"), _BASE / "suites"
-)
+SUITES_DIR: Final[Path] = _resolve(os.environ.get("QUETZAL_SUITES_DIR") or _CONFIG.get("suites_dir"), _BASE / "suites")
 
 # Where benchmark sessions are written (generated output; keep out of version
 # control). Defaults under .quetzal/ so it doesn't clutter the target repo root.
@@ -69,10 +65,37 @@ SUITE_ROOTS: Final[dict[str, tuple[str, ...]]] = {
 # Answerer agent
 DEFAULT_AGENT: Final[str] = "claude-code"
 DEFAULT_AGENT_MODEL: Final[str | None] = None  # None = let the agent CLI use its default model
+DEFAULT_CODEX_PROVIDER: Final[str] = "openai"
 AGENT_TIMEOUT_S: Final[int] = 600  # per-question wall-clock cap for a CLI run
 
 # Read-only tool allowlist for the Claude Code client (no edits, no shell writes).
 CLAUDE_ALLOWED_TOOLS: Final[tuple[str, ...]] = ("Read", "Grep", "Glob", "LS")
+
+# Paths skipped when inventorying repository context assets.
+IGNORED_DIRS: Final[frozenset[str]] = frozenset(
+    {
+        ".git",
+        ".next",
+        ".quetzal",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".turbo",
+        ".venv",
+        "__pycache__",
+        "build",
+        "coverage",
+        "dist",
+        "node_modules",
+        "results",
+        "venv",
+    }
+)
+
+# Bound recurring eval cost. Set to 0 under [evaluation] to allow unlimited
+# suite growth; editing/replacing an existing case is always allowed.
+_eval_cfg = _CONFIG.get("evaluation") or {}
+MAX_CASES_PER_SUITE: Final[int] = int(_eval_cfg.get("max_cases_per_suite", 12))
 
 # `quetzal docs-check` (the keep-docs-fresh hook) fires only on this unambiguous
 # signal: a *new* package manifest landed in a directory with no README — i.e. a

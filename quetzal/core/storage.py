@@ -55,7 +55,7 @@ class SessionStore:
 
     def load_config(self) -> SessionConfig:
         data = json.loads((self.root / "config.json").read_text())
-        return SessionConfig(**data)
+        return SessionConfig.from_dict(data)
 
     def save_result(self, result: CaseResult) -> None:
         # Guard against a crafted service/id escaping the session dir (e.g. overwriting config.json).

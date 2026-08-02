@@ -8,6 +8,7 @@ remember the `python -m quetzal.<module>` form:
     quetzal run    --suite <name> --agent claude-code
     quetzal score  <session-id> --judge claude-code
     quetzal report <session-id>
+    quetzal export <session-id>
     quetzal docs-check                    # nudge when a new module has no docs
     quetzal ui
 
@@ -20,6 +21,7 @@ import click
 
 from quetzal.cli import main as run_command
 from quetzal.docs_check import main as docs_check_command
+from quetzal.export import main as export_command
 from quetzal.init_cmd import main as init_command
 from quetzal.report import main as report_command
 from quetzal.score import main as score_command
@@ -48,6 +50,7 @@ cli.add_command(init_command, name="init")
 cli.add_command(run_command, name="run")
 cli.add_command(score_command, name="score")
 cli.add_command(report_command, name="report")
+cli.add_command(export_command, name="export")
 cli.add_command(docs_check_command, name="docs-check")
 cli.add_command(ui_command, name="ui")
 

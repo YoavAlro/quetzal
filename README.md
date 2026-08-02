@@ -98,6 +98,9 @@ results_dir = ".quetzal/results"     # benchmark sessions (generated, git-ignore
 # suite name -> code root(s) relative to target_repo (the agent's starting hint)
 auth     = ["services/auth"]
 billing  = ["services/billing", "libs/money"]
+
+[evaluation]
+max_cases_per_suite = 12          # 0 disables the recurring-cost guardrail
 ```
 
 Then write questions. Use the UI (below) or drop a `suites/<name>.json` file — a list of:
@@ -123,10 +126,10 @@ that's wrong or incomplete. Every value in `quetzal.toml` is overridable by env 
 
 | Agent | CLI | Read-only enforcement | Token + cost telemetry |
 |-------|-----|------------------------|------------------------|
-| `claude-code` (default) | `claude -p --output-format json` | `--allowedTools Read Grep Glob LS` | full (usage + `total_cost_usd`) |
-| `codex` | `codex exec --json --sandbox read-only` | sandbox read-only | best-effort (parsed from events) |
-| `cursor` | `cursor-agent -p --output-format json` | — | best-effort |
-| `opencode` | `opencode run` | — | accuracy + latency only (no token telemetry) |
+| `claude-code` (default) | `claude -p` JSON/stream JSON | `--allowedTools Read Grep Glob LS` | tokens, cache reads, billed cost, latency |
+| `codex` | `codex exec --json --ephemeral` | read-only sandbox; plugins/apps off | tokens, cache reads, estimated cost, latency |
+| `cursor` | `cursor-agent -p` JSON/stream JSON | ask mode + sandbox | tokens/cache when reported, estimated cost, latency |
+| `opencode` | `opencode run --format json` | plan agent + `--pure` | tokens, cache reads, harness cost, latency |
 
 The **judge** defaults to `claude-code` too (`quetzal score --judge claude-code`) — it shells out to
 `claude -p` for a structured verdict, so **no API keys are required** anywhere in the pipeline. Pin
@@ -134,6 +137,40 @@ the judge model with `--judge-model`.
 
 Answerers always run **read-only** (enforced per CLI, never by trusting the model). Quetzal never
 passes a skip-permissions flag.
+
+Codex runs can pin both the provider and reasoning effort (`--provider`, `--reasoning-effort`). If
+a transient CLI failure leaves only a few unanswered cases, recover them without re-spending the
+successful answers:
+
+```bash
+quetzal run --suite auth --agent codex --session auth-run --no-score
+quetzal run --suite auth --agent codex --session auth-run --retry-errors --no-score
+```
+
+Sessions capture the target repository's commit, branch, and dirty state. When a CLI reports tokens
+but no dollar amount, Quetzal estimates an API-equivalent cost from its packaged `pricing.json`;
+`~$` marks an estimate, not a billed subscription charge. Override rates with `--pricing` on
+`report`/`export` or `QUETZAL_PRICING`.
+
+## Repository context usage
+
+Pass `--track-repo-usage` to correlate benchmark health with repository maintenance:
+
+```bash
+quetzal run --suite auth --agent codex --track-repo-usage
+```
+
+Quetzal records two different measurements:
+
+- **Inventory at run start:** unique Markdown files, repository custom skills (`*/skills/*/SKILL.md`),
+  and repository hook assets.
+- **Observed usage:** unique assets whose paths appeared in structured tool invocation inputs during
+  answer turns. Report rows show this as `md/sk/hook`; `report.json` and `bundle.json` include paths.
+
+Observed usage is deliberately labeled best-effort. A harness may hide an internal read or hook
+execution, so zero means “not visible in emitted tool events,” not proof that the resource had no
+effect. The inventory is deterministic and can still be correlated against accuracy, tokens, cost,
+and latency across sessions.
 
 ## Management UI
 
@@ -146,7 +183,8 @@ quetzal ui          # → http://127.0.0.1:8765
 - **Questions** tab — per-suite add / edit / delete, set difficulty and tags; each suite shows its
   latest benchmark score in the sidebar. Edits write straight to the JSON suite files.
 - **Score history** tab — every past run as a card and in an all-runs table (accuracy, tokens,
-  cost, agent, judge), a per-suite accuracy/token trend chart, and a click-through breakdown.
+  cost, agent, judge, repo context), a per-suite accuracy/token trend chart, and a click-through
+  breakdown with inventory and observed `md/skill/hook` counts.
 
 Local-only, no auth — don't expose the port publicly. Styled in the Quetzal brand theme (navy +
 teal→green); the palette, type, and component tokens are documented in [docs/design.md](docs/design.md).
@@ -195,9 +233,10 @@ module", and `readme_base_lines` / `readme_lines_per_100_loc` set the size-relat
 ## Output
 
 `.quetzal/results/<session-id>/`:
-- `config.json` — run metadata (agent, model, judge, suites)
-- `<suite>/<case-id>.json` — question, answer, token usage, judge verdict
-- `report.json` — aggregated per-suite + overall stats
+- `config.json` — agent/model settings, git provenance, and optional repository inventory
+- `<suite>/<case-id>.json` — question, answer, token/cache/cost/timing telemetry, observed repo usage, verdict
+- `report.json` — per-suite and overall accuracy, telemetry, and repository-context counts
+- `bundle.json` — optional single-file export created by `quetzal export <session-id>`
 
 ## How it's organized
 
@@ -205,12 +244,13 @@ module", and `readme_base_lines` / `readme_lines_per_100_loc` set the size-relat
 |------|--------------|
 | `quetzal/agents/` | `AgentClient` adapters that shell out to coding-agent CLIs (lazy registry) |
 | `quetzal/judge/` | Judge prompt + the Claude Code judge that grades against ground truth |
-| `quetzal/core/` | Run loop + JSON session storage |
+| `quetzal/core/` | Run loop, retry logic, git provenance, repo-context observation, JSON storage |
 | `quetzal/datasets/` | JSON-backed question store (shared by runner + UI) |
 | `quetzal/ui/` | Build-free local web console |
 | `quetzal/{cli,score,report,main}.py` | The pipeline entry points |
 | `quetzal/init_cmd.py` | `quetzal init` — scaffold config, suites/results dirs, the keep-docs-fresh hook + skill |
 | `quetzal/docs_check.py` | `quetzal docs-check` — the new-module-without-docs nudge behind the hook |
+| `quetzal/pricing.py` | API-equivalent estimates for harnesses that report tokens but no cost |
 | `quetzal.toml` | Target repo, suites dir, results dir, suite → code-roots map |
 
 Adding a new answerer = a new `AgentClient` in `quetzal/agents/` plus one line in its registry. Keep

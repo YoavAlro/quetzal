@@ -14,14 +14,13 @@ from __future__ import annotations
 import json
 import re
 import shutil
-import subprocess
 from typing import ClassVar
 
-from quetzal.config import AGENT_TIMEOUT_S, CLAUDE_ALLOWED_TOOLS, REPO_ROOT
+from quetzal.claude_cli import run_claude
 from quetzal.judge.prompt import JUDGE_PROMPT, JudgeVerdict
 
 _FORMAT = (
-    '\n\nRespond with ONLY a single-line JSON object — no markdown, no prose:\n'
+    "\n\nRespond with ONLY a single-line JSON object — no markdown, no prose:\n"
     '{"correct": true or false, "score": <integer 1-5>, "justification": "<one or two sentences>"}'
 )
 
@@ -38,22 +37,13 @@ class ClaudeCodeJudge:
         return shutil.which("claude") is not None
 
     def judge(self, question: str, ground_truth: str, answer: str, service: str) -> JudgeVerdict:
-        prompt = JUDGE_PROMPT.format(
-            service=service, question=question, ground_truth=ground_truth, answer=answer or "(no answer produced)"
-        ) + _FORMAT
-        # Grading is pure text reasoning; pin the read-only allowlist so the judge
-        # can never mutate the repo under test.
-        cmd = ["claude", "-p", prompt, "--output-format", "json", "--allowedTools", *CLAUDE_ALLOWED_TOOLS]
-        if self.model:
-            cmd += ["--model", self.model]
-
-        proc = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, timeout=AGENT_TIMEOUT_S)
-        if proc.returncode != 0:
-            raise RuntimeError(f"claude judge exited {proc.returncode}: {proc.stderr.strip()[:300]}")
-
-        data = json.loads(proc.stdout)
-        if data.get("is_error"):
-            raise RuntimeError(f"claude judge error: {str(data.get('result'))[:300]}")
+        prompt = (
+            JUDGE_PROMPT.format(
+                service=service, question=question, ground_truth=ground_truth, answer=answer or "(no answer produced)"
+            )
+            + _FORMAT
+        )
+        data = run_claude(prompt, self.model, "claude judge").data
         return _parse_verdict(data.get("result", ""))
 
 

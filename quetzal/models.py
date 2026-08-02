@@ -28,13 +28,25 @@ class TokenUsage:
     input_tokens: int = 0
     output_tokens: int = 0
     total_tokens: int = 0
+    cached_input_tokens: int = 0
 
     def __add__(self, other: TokenUsage) -> TokenUsage:
         return TokenUsage(
             input_tokens=self.input_tokens + other.input_tokens,
             output_tokens=self.output_tokens + other.output_tokens,
             total_tokens=self.total_tokens + other.total_tokens,
+            cached_input_tokens=self.cached_input_tokens + other.cached_input_tokens,
         )
+
+
+@dataclass(frozen=True)
+class RepoResources:
+    """Repository context assets, stored as repo-relative paths."""
+
+    markdown_files: tuple[str, ...] = ()
+    skill_files: tuple[str, ...] = ()
+    hook_files: tuple[str, ...] = ()
+    trace_available: bool = False
 
 
 @dataclass
@@ -53,6 +65,7 @@ class AnswerRun:
     tool_calls: int | None = None
     llm_calls: int | None = None
     cost_usd: float | None = None
+    repo_usage: RepoResources | None = None
 
 
 @dataclass
@@ -90,6 +103,8 @@ class CaseResult:
         if data.get("answer_run"):
             run = dict(data["answer_run"])
             run["usage"] = TokenUsage(**run["usage"])
+            if run.get("repo_usage"):
+                run["repo_usage"] = _resources(run["repo_usage"])
             answer_run = AnswerRun(**run)
         evaluation = Evaluation(**data["evaluation"]) if data.get("evaluation") else None
         return cls(case=case, answer_run=answer_run, evaluation=evaluation, error=data.get("error"))
@@ -105,4 +120,24 @@ class SessionConfig:
     started_at: str
     agent_client: str = "claude-code"
     judge_model: str | None = None
+    git_commit: str | None = None
+    git_branch: str | None = None
+    git_dirty: bool = False
+    repo_inventory: RepoResources | None = None
     extra: dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> SessionConfig:
+        values = dict(data)
+        if values.get("repo_inventory"):
+            values["repo_inventory"] = _resources(values["repo_inventory"])
+        return cls(**values)
+
+
+def _resources(data: dict[str, Any]) -> RepoResources:
+    return RepoResources(
+        markdown_files=tuple(data.get("markdown_files", ())),
+        skill_files=tuple(data.get("skill_files", ())),
+        hook_files=tuple(data.get("hook_files", ())),
+        trace_available=bool(data.get("trace_available", False)),
+    )

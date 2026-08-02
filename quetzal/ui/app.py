@@ -19,9 +19,11 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from quetzal.config import MAX_CASES_PER_SUITE
 from quetzal.core.storage import validate_path_segment
 from quetzal.datasets import (
     SERVICE_ROOTS,
+    SuiteFullError,
     delete_case,
     list_services,
     load_cases,
@@ -87,6 +89,7 @@ def get_services() -> list[dict]:
                 "name": service,
                 "code_roots": list(SERVICE_ROOTS.get(service, ())),
                 "total": len(cases),
+                "capacity": MAX_CASES_PER_SUITE or None,
                 "latest_score": latest["accuracy_pct"] if latest else None,
                 "latest_session": latest["session_id"] if latest else None,
                 "latest_at": latest["started_at"] if latest else None,
@@ -121,7 +124,10 @@ def create_question(service: str, payload: QuestionPayload) -> dict:
         difficulty=payload.difficulty,
         tags=tuple(payload.tags),
     )
-    upsert_case(service, case)
+    try:
+        upsert_case(service, case)
+    except SuiteFullError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     return _case_dict(case)
 
 

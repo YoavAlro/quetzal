@@ -8,6 +8,7 @@ suite -> code-root mapping loaded from quetzal.toml.
 
 from quetzal.datasets.services import SERVICE_ROOTS
 from quetzal.datasets.store import (
+    SuiteFullError,
     all_cases,
     delete_case,
     get_cases,
@@ -27,5 +28,6 @@ __all__ = [
     "load_cases",
     "save_cases",
     "service_hint",
+    "SuiteFullError",
     "upsert_case",
 ]

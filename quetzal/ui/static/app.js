@@ -174,10 +174,11 @@ async function loadHistory() {
     .map((s) => {
       const o = s.overall || {};
       const cost = o.total_cost_usd != null ? ` · $${o.total_cost_usd}` : "";
+      const context = ctxCounts(s.repo_context?.inventory);
       return `<div class="panel scard" data-session="${esc(s.session_id)}">
         <div class="sid">${esc(s.session_id)}</div>
         <div class="big">${o.accuracy_pct ?? 0}%</div>
-        <div class="meta">${o.correct ?? 0}/${o.judged ?? 0} correct · ${fmt(o.avg_tokens)} avg tok${cost}</div>
+        <div class="meta">${o.correct ?? 0}/${o.judged ?? 0} correct · ${fmt(o.avg_tokens)} avg tok${cost} · ctx ${context}</div>
         <span class="model">${esc(s.agent_client || "?")} · ${esc(s.agent_model)}</span>
       </div>`;
     })
@@ -199,6 +200,7 @@ async function loadHistory() {
 const fmt = (n) => (n == null ? "—" : Number(n).toLocaleString());
 const fmtDate = (s) => (s ? String(s).slice(0, 16).replace("T", " ") : "—");
 const acc = (p) => (p >= 80 ? "easy" : p >= 50 ? "medium" : "hard");
+const ctxCounts = (c) => c ? `${c.markdown_files ?? 0}/${c.custom_skills ?? 0}/${c.hooks ?? 0}` : "—";
 
 function renderRunsTable(sessions) {
   const rows = sessions
@@ -215,13 +217,14 @@ function renderRunsTable(sessions) {
         <td>${fmt(o.avg_tokens)}</td>
         <td>${fmt(o.total_tokens)}</td>
         <td>${o.total_cost_usd != null ? "$" + o.total_cost_usd : "—"}</td>
+        <td>${ctxCounts(s.repo_context?.inventory)}</td>
       </tr>`;
     })
     .join("");
   $("runs-table").innerHTML = `<table>
     <thead><tr>
       <th>Session</th><th>Date</th><th>Agent</th><th>Model</th><th>Judge</th>
-      <th>Accuracy</th><th>Correct</th><th>Avg tok</th><th>Total tok</th><th>Cost</th>
+      <th>Accuracy</th><th>Correct</th><th>Avg tok</th><th>Total tok</th><th>Cost</th><th>Repo md/sk/hook</th>
     </tr></thead>
     <tbody>${rows}</tbody></table>`;
   $("runs-table").querySelectorAll("[data-session]").forEach((r) =>
@@ -285,14 +288,17 @@ async function showSession(id) {
       (s) => `<tr class="row"><td>${esc(s.service)}</td>
       <td>${s.correct}/${s.judged}</td>
       <td><span class="chip ${s.accuracy_pct >= 80 ? "easy" : s.accuracy_pct >= 50 ? "medium" : "hard"}">${s.accuracy_pct}%</span></td>
-      <td>${s.avg_score}</td><td>${fmt(s.avg_tokens)}</td><td>${fmt(s.total_tokens)}</td><td>${s.total_cost_usd != null ? "$" + s.total_cost_usd : "—"}</td></tr>`
+      <td>${s.avg_score}</td><td>${fmt(s.avg_tokens)}</td><td>${fmt(s.total_tokens)}</td><td>${s.total_cost_usd != null ? "$" + s.total_cost_usd : "—"}</td>
+      <td>${ctxCounts(s.observed_repo_usage)}</td></tr>`
     )
     .join("");
   const oc = report.overall.total_cost_usd != null ? ` · $${report.overall.total_cost_usd}` : "";
+  const inventory = ctxCounts(report.repo_context?.inventory);
+  const observed = ctxCounts(report.repo_context?.observed_usage);
   $("session-detail").innerHTML = `<div class="panel panel-pad">
     <div class="chart-head"><h3>Session ${esc(id)}</h3>
-      <span class="muted">overall ${report.overall.accuracy_pct}% · ${fmt(report.overall.total_tokens)} tok${oc}</span></div>
-    <table><thead><tr><th>Suite</th><th>Correct</th><th>Accuracy</th><th>Avg score</th><th>Avg tok</th><th>Total tok</th><th>Cost</th></tr></thead>
+      <span class="muted">overall ${report.overall.accuracy_pct}% · ${fmt(report.overall.total_tokens)} tok${oc} · repo inventory ${inventory} · observed ${observed}</span></div>
+    <table><thead><tr><th>Suite</th><th>Correct</th><th>Accuracy</th><th>Avg score</th><th>Avg tok</th><th>Total tok</th><th>Cost</th><th>Observed md/sk/hook</th></tr></thead>
     <tbody>${rows}</tbody></table></div>`;
   $("session-detail").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }

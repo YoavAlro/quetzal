@@ -25,6 +25,7 @@ class SessionSummary:
     judge_model: str | None
     services: list[str]
     overall: dict
+    repo_context: dict
 
 
 def _summary(session_id: str) -> SessionSummary | None:
@@ -42,6 +43,7 @@ def _summary(session_id: str) -> SessionSummary | None:
         judge_model=config.judge_model,
         services=config.services,
         overall=report["overall"],
+        repo_context=report["repo_context"],
     )
 
 
@@ -58,6 +60,7 @@ def list_session_summaries() -> list[dict]:
             "judge_model": s.judge_model,
             "services": s.services,
             "overall": s.overall,
+            "repo_context": s.repo_context,
         }
         for s in summaries
     ]
@@ -82,6 +85,7 @@ def build_history() -> dict:
                 "avg_tokens": service["avg_tokens"],
                 "judged": service["judged"],
                 "correct": service["correct"],
+                "observed_repo_usage": service["observed_repo_usage"],
             }
             per_service.setdefault(service["service"], []).append(point)
         overall.append(
@@ -91,6 +95,7 @@ def build_history() -> dict:
                 "agent_model": session.agent_model,
                 "accuracy_pct": session.overall["accuracy_pct"],
                 "avg_tokens": session.overall["avg_tokens"],
+                "repo_context": session.repo_context,
             }
         )
     return {"per_service": per_service, "overall": overall}

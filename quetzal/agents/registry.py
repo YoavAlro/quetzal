@@ -32,12 +32,23 @@ def _load(name: str) -> type[AgentClient]:
     return getattr(module, class_name)
 
 
-def build_agent(name: str, model: str | None = None) -> AgentClient:
+def build_agent(
+    name: str,
+    model: str | None = None,
+    provider: str | None = None,
+    reasoning_effort: str | None = None,
+    track_repo_usage: bool = False,
+) -> AgentClient:
     """Instantiate an agent client, erroring clearly if it is not available."""
     agent_cls = _load(name)
     if not agent_cls.is_available():
         raise RuntimeError(f"Agent '{name}' is not available. {agent_cls.install_hint}")
-    return agent_cls(model=model)
+    return agent_cls(
+        model=model,
+        provider=provider,
+        reasoning_effort=reasoning_effort,
+        track_repo_usage=track_repo_usage,
+    )
 
 
 def available_agents() -> dict[str, bool]:
